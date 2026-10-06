@@ -6,7 +6,7 @@ SMM 4年プラン 住宅用 案件審査ツール（[smm-review-tool.web.app](ht
 ## 構成
 
 ```
-app/main.py      API（Flask + gunicorn）。POST /api/convert-sheets、GET /healthz
+app/main.py      API（Flask + gunicorn）。POST /api/convert-sheets、GET /health
 app/convert.py   LibreOffice（UNO）での変換。パターンA/Bの判定・対象シートだけ出力・パターンBの印刷設定の補正
 Dockerfile       Debian + LibreOffice Calc + 日本語フォント（IPA / Noto CJK）
 fonts.conf       MS ゴシック・メイリオ等 → IPA / Noto フォントへの対応付け

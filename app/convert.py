@@ -130,6 +130,25 @@ def _own_page_style(doc, sheet, used_count: dict[str, int]):
     return style
 
 
+def _include_hidden_cells_in_charts(sheet) -> None:
+    charts = sheet.getCharts()
+    for name in charts.getElementNames():
+        try:
+            model = charts.getByName(name).getEmbeddedObject()
+        except Exception:
+            continue
+        for target in (model, getattr(model, "FirstDiagram", None)):
+            try:
+                if target is not None:
+                    target.setPropertyValue("IncludeHiddenCells", True)
+            except Exception:
+                pass  # この種類のグラフでは設定できない項目
+        try:
+            model.setModified(True)
+        except Exception:
+            pass
+
+
 def convert_auto(source: Path, destination: Path) -> tuple[str, list[str]]:
     import uno
 
@@ -167,11 +186,23 @@ def convert_auto(source: Path, destination: Path) -> tuple[str, list[str]]:
                     style.Width, style.Height = A4 if portrait else (A4[1], A4[0])
                     style.ScaleToPagesX = 1
                     style.ScaleToPagesY = max(1, len(s.getPrintAreas()))
+                    # パターンBの発電シミュレーションのグラフは元データが非表示の行・列にあり、
+                    # LibreOffice の既定（非表示セルは描かない）だと空のグラフになるため、非表示セルも描く
+                    _include_hidden_cells_in_charts(s)
 
-            # 対象外のシートは非表示にして出力から外す（変更はメモリ上だけで、元ファイルは保存しない）
+            # 対象外のシートは出力から外す（変更はメモリ上だけで、元ファイルは保存しない）。
+            # LibreOffice は非表示のシートでも印刷範囲があると PDF に出力するため、非表示にしたうえで印刷範囲も外す。
+            try:  # 表示中のシートは非表示にできないため、先に対象シートを表示中にしておく
+                doc.CurrentController.setActiveSheet(next(s for s in sheets if s.Name == names[0]))
+            except Exception:
+                pass
             for s in sheets:
-                if s.Name not in names and s.IsVisible:
+                if s.Name in names:
+                    continue
+                if s.IsVisible:
                     s.IsVisible = False
+                if s.getPrintAreas():
+                    s.setPrintAreas(())
 
             doc.storeToURL(
                 uno.systemPathToFileUrl(str(destination)),

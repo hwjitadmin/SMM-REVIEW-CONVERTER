@@ -7,7 +7,7 @@
 - POST /api/convert-sheets : multipart の file（.xls / .xlsx / .xlsm）→ PDF
     成功: 200 application/pdf、ヘッダー X-Pattern（A/B）と X-Conversion-Warnings（URLエンコードしたJSON配列）
     失敗: 4xx/5xx {"error": "メッセージ"}
-- GET /healthz : 死活確認
+- GET /health : 死活確認（Cloud Run は末尾が z の URL を予約しているため /healthz は使えない）
 
 見積ファイル（顧客情報を含む）は一時フォルダーで変換したらすぐ削除し、保存しない。
 ログにもファイル名や内容は出さない。
@@ -63,7 +63,7 @@ def too_large(_):
     return jsonify(error=f"ファイルが{MAX_MB}MBを超えています。"), 413
 
 
-@app.get("/healthz")
+@app.get("/health")
 def healthz():
     return jsonify(ok=True)
 
