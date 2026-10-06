@@ -1,0 +1,5 @@
+# 実在の顧客名・物件番号を含むサンプル見積や変換結果は GitHub に置かない
+tests/fixtures/
+tests/output/
+__pycache__/
+*.pyc

@@ -1,0 +1,9 @@
+# gcloud run deploy --source でアップロードしないもの（顧客データを Cloud Build に送らない）
+.git/
+.github/
+.gitignore
+.gcloudignore
+tests/
+README.md
+__pycache__/
+*.pyc
