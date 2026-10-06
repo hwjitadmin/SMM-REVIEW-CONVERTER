@@ -50,7 +50,7 @@ def detect_pattern(visible: list[str]) -> tuple[str, list[str]]:
 
 
 def _props(**kwargs):
-    from com.sun.star.beans import PropertyValue
+    from com.sun.star.beans import PropertyValue  # type: ignore  # LibreOffice 付属（Cloud Run のコンテナ内にだけある）
 
     return tuple(PropertyValue(Name=k, Value=v) for k, v in kwargs.items())
 
@@ -59,7 +59,7 @@ class Office:
     """変換1回分の LibreOffice（headless）を起動し、UNO で接続する。"""
 
     def __enter__(self):
-        import uno
+        import uno  # type: ignore  # LibreOffice 付属（Cloud Run のコンテナ内にだけある）
 
         self.tmp = Path(tempfile.mkdtemp(prefix="lo_"))
         profile = self.tmp / "profile"
@@ -163,7 +163,7 @@ def _auto_layout_charts(sheet) -> None:
 
 
 def convert_auto(source: Path, destination: Path) -> tuple[str, list[str]]:
-    import uno
+    import uno  # type: ignore  # LibreOffice 付属（Cloud Run のコンテナ内にだけある）
 
     if source.suffix.lower() not in EXCEL_EXTENSIONS:
         raise ValueError(".xls / .xlsx / .xlsm ファイルを指定してください。")
