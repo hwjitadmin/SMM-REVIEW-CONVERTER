@@ -130,19 +130,32 @@ def _own_page_style(doc, sheet, used_count: dict[str, int]):
     return style
 
 
-def _include_hidden_cells_in_charts(sheet) -> None:
+def _auto_layout_charts(sheet) -> None:
+    """グラフの描画領域（プロットエリア）の位置・大きさを自動に戻す。
+
+    パターンBの古い .xls のグラフは、Excel 側で手動指定されたプロットエリアの配置を LibreOffice が
+    正しく読めず、幅がほぼ0に潰れて空のグラフに見えるため。
+    """
     charts = sheet.getCharts()
     for name in charts.getElementNames():
         try:
             model = charts.getByName(name).getEmbeddedObject()
+            diagram = model.getDiagram()
         except Exception:
             continue
-        for target in (model, getattr(model, "FirstDiagram", None)):
-            try:
-                if target is not None:
-                    target.setPropertyValue("IncludeHiddenCells", True)
-            except Exception:
-                pass  # この種類のグラフでは設定できない項目
+        try:
+            diagram.setAutomaticDiagramPositioning()
+        except Exception:
+            pass
+        try:  # chart2 側の手動配置（相対位置・相対サイズ）も既定に戻す
+            first = model.getFirstDiagram()
+            for prop in ("RelativePosition", "RelativeSize"):
+                try:
+                    first.setPropertyToDefault(prop)
+                except Exception:
+                    pass
+        except Exception:
+            pass
         try:
             model.setModified(True)
         except Exception:
@@ -186,9 +199,8 @@ def convert_auto(source: Path, destination: Path) -> tuple[str, list[str]]:
                     style.Width, style.Height = A4 if portrait else (A4[1], A4[0])
                     style.ScaleToPagesX = 1
                     style.ScaleToPagesY = max(1, len(s.getPrintAreas()))
-                    # パターンBの発電シミュレーションのグラフは元データが非表示の行・列にあり、
-                    # LibreOffice の既定（非表示セルは描かない）だと空のグラフになるため、非表示セルも描く
-                    _include_hidden_cells_in_charts(s)
+                    # パターンBの発電シミュレーションのグラフは、そのままだとプロットエリアが潰れて空に見える
+                    _auto_layout_charts(s)
 
             # 対象外のシートは出力から外す（変更はメモリ上だけで、元ファイルは保存しない）。
             # LibreOffice は非表示のシートでも印刷範囲があると PDF に出力するため、非表示にしたうえで印刷範囲も外す。
