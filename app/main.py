@@ -1,8 +1,8 @@
 """smm-review の「審査書類一式ファイル出力」用 PDF 変換 API（Cloud Run）。
 
-画面（Firebase Hosting: https://smm-review-tool.web.app）からは、Hosting の rewrite で
-同じオリジンの /api/convert-sheets として呼ばれる。手元の開発用ページ（localhost）からの
-直接呼び出しに備えて、許可したオリジンにだけ CORS を返す。
+画面（Firebase Hosting: https://smm-review-tool.web.app、hanwha-japan-app プロジェクト）からは、
+この Cloud Run（technology-section-app プロジェクト）の URL を直接呼ぶ。画面のオリジンと
+手元の開発用ページ（localhost）にだけ CORS を返す。
 
 - POST /api/convert-sheets : multipart の file（.xls / .xlsx / .xlsm）→ PDF
     成功: 200 application/pdf、ヘッダー X-Pattern（A/B）と X-Conversion-Warnings（URLエンコードしたJSON配列）

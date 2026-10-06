@@ -26,12 +26,12 @@ jobs:
       # - concurrency 1：1台で同時に1件だけ変換（LibreOffice のメモリ使用量が大きいため）
       # - min-instances 0：使っていない間は停止して費用をかけない（初回は起動待ちあり）
       # - max-instances 3：想定外の大量アクセスで費用が膨らまないようにする上限
-      # - allow-unauthenticated：Firebase Hosting の rewrite から呼ぶために必要
+      # - allow-unauthenticated：画面（ブラウザ）から直接呼ぶために必要（呼び出し元は main.py の CORS で制限）
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy smm-review-converter \
             --source . \
-            --project hanwha-japan-app \
+            --project technology-section-app \
             --region asia-northeast1 \
             --allow-unauthenticated \
             --cpu 2 \

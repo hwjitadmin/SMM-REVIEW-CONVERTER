@@ -10,7 +10,7 @@ app/main.py      API（Flask + gunicorn）。POST /api/convert-sheets、GET /hea
 app/convert.py   LibreOffice（UNO）での変換。パターンA/Bの判定・対象シートだけ出力・パターンBの印刷設定の補正
 Dockerfile       Debian + LibreOffice Calc + 日本語フォント（IPA / Noto CJK）
 fonts.conf       MS ゴシック・メイリオ等 → IPA / Noto フォントへの対応付け
-.github/workflows/deploy.yml  main に push すると Cloud Run（hanwha-japan-app / asia-northeast1）へ自動デプロイ
+.github/workflows/deploy.yml  main に push すると Cloud Run（technology-section-app / asia-northeast1）へ自動デプロイ
 ```
 
 ## API
@@ -21,7 +21,7 @@ fonts.conf       MS ゴシック・メイリオ等 → IPA / Noto フォント�
 | 成功 | `200 application/pdf`、ヘッダー `X-Pattern`（A / B）、`X-Conversion-Warnings`（URL エンコードした JSON 配列） |
 | 失敗 | `4xx / 5xx` `{"error": "メッセージ"}` |
 
-画面からは Firebase Hosting の rewrite（`/api/**` → このサービス）経由で、同じオリジンとして呼ばれます。
+画面（Firebase の hanwha-japan-app）からは、このサービスの URL（https://smm-review-converter-292416290477.asia-northeast1.run.app）を直接呼びます（CORS は main.py の ALLOWED_ORIGINS で許可）。
 この形を変えるときは、画面側（`SMM-REVIEW-TOOL` の `src/app.js` の `exportPackagePdf()`）も合わせて直してください。
 
 ## 見積ファイルの2つのパターン
@@ -48,7 +48,7 @@ curl -F "file=@見積ファイル.xlsx" http://localhost:8090/api/convert-sheets
 - `GCP_SA_KEY`：サービスアカウントの JSON 鍵（ロール：Cloud Run 管理者、Cloud Build 編集者、Artifact Registry 管理者、サービス アカウント ユーザー、Storage 管理者）
 - `EMAIL_USERNAME` / `EMAIL_PASSWORD`：デプロイ結果のメール通知用
 
-**初回は、画面側（SMM-REVIEW-TOOL）の rewrite 設定より先に、このサービスをデプロイしてください**（rewrite 先のサービスが無いと Firebase のデプロイが失敗します）。
+**画面側（SMM-REVIEW-TOOL）を切り替える前に、このサービスをデプロイして動作確認してください。**
 
 ## 注意
 
