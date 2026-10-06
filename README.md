@@ -10,7 +10,7 @@ app/main.py      API（Flask + gunicorn）。POST /api/convert-sheets、GET /hea
 app/convert.py   LibreOffice（UNO）での変換。パターンA/Bの判定・対象シートだけ出力・パターンBの印刷設定の補正
 Dockerfile       Debian + LibreOffice Calc + 日本語フォント（IPA / Noto CJK）
 fonts.conf       MS ゴシック・メイリオ等 → IPA / Noto フォントへの対応付け
-.github/workflows/deploy.yml  main に push すると Cloud Run（technology-section-app / asia-northeast1）へ自動デプロイ
+.github/workflows/deploy.yml  main に push すると Cloud Build でビルド → Artifact Registry（cloud-run-repo）に保存 → Cloud Run（technology-section-app / asia-northeast1）へ自動デプロイ
 ```
 
 ## API
@@ -45,7 +45,7 @@ curl -F "file=@見積ファイル.xlsx" http://localhost:8090/api/convert-sheets
 
 `main` に push すると GitHub Actions がデプロイします。必要な Secrets：
 
-- `GCP_SA_KEY`：サービスアカウントの JSON 鍵（ロール：Cloud Run 管理者、Cloud Build 編集者、Artifact Registry 管理者、サービス アカウント ユーザー、Storage 管理者）
+- `GCP_SA_KEY`：サービスアカウント（github-actions-deploy）の JSON 鍵（ロール：Cloud Run 管理者、Cloud Build 編集者、Artifact Registry 書き込み、Service Usage コンシューマー、サービス アカウント ユーザー、ストレージ管理者）。ビルドを実行する 292416290477-compute@developer.gserviceaccount.com には Cloud Run ビルダー・Artifact Registry 書き込み・ログ書き込みが必要
 - `EMAIL_USERNAME` / `EMAIL_PASSWORD`：デプロイ結果のメール通知用
 
 **画面側（SMM-REVIEW-TOOL）を切り替える前に、このサービスをデプロイして動作確認してください。**
