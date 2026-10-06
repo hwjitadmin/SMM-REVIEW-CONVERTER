@@ -24,16 +24,30 @@ jobs:
 
       # Dockerfile から Cloud Build でイメージを作り、既存の Artifact Registry（cloud-run-repo、東京）に保存する
       # （gcloud run deploy --source は保管場所が cloud-run-source-deploy 固定で、その作成権限が無いため使わない）
-      # ビルドのログを流すにはプロジェクトの閲覧者権限が必要なため流さない（完了は待つ）。
-      # ログは Google Cloud コンソールの Cloud Build →「履歴」で確認する。
+      # gcloud builds submit は完了まで待つとログを流そうとし、プロジェクトの閲覧者権限が無いと
+      # （ビルド自体は動いていても）エラーで終わる。そのため --async で開始し、状態だけを確認して待つ。
+      # ビルドのログは Google Cloud コンソールの Cloud Build →「履歴」で確認する。
       - name: Build image
         run: |
-          gcloud builds submit . \
+          BUILD_ID=$(gcloud builds submit . \
             --project technology-section-app \
             --tag "${IMAGE}:${GITHUB_SHA}" \
             --timeout 1800s \
-            --suppress-logs \
-            --quiet
+            --async \
+            --format 'value(id)' \
+            --quiet)
+          echo "Cloud Build: https://console.cloud.google.com/cloud-build/builds/${BUILD_ID}?project=technology-section-app"
+          for i in $(seq 1 180); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --project technology-section-app --format 'value(status)')
+            echo "$(date +%H:%M:%S) ${STATUS}"
+            case "$STATUS" in
+              SUCCESS) exit 0 ;;
+              FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED)
+                echo "ビルドが失敗しました（${STATUS}）。上の URL でログを確認してください。"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "ビルドが30分以内に終わりませんでした。"; exit 1
         env:
           IMAGE: asia-northeast1-docker.pkg.dev/technology-section-app/cloud-run-repo/smm-review-converter
 
