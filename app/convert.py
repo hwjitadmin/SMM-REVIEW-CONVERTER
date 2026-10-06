@@ -162,6 +162,25 @@ def _auto_layout_charts(sheet) -> None:
             pass
 
 
+def _strip_trailing_newlines(sheet) -> None:
+    """文字列セルの末尾の改行を取り除く。
+
+    Excel は「本文＋末尾の改行」のセルを1行として表示するが、LibreOffice は空行を含む2行として
+    扱うため、文字が上にずれて低い行からはみ出し、半分隠れる（パターンBの発電シミュレーション B61 で確認）。
+    数式のセルは対象外（定数の文字列セルだけ）。
+    """
+    string_cells = 4  # com.sun.star.sheet.CellFlags.STRING
+    try:
+        cells = sheet.queryContentCells(string_cells).getCells().createEnumeration()
+    except Exception:
+        return
+    while cells.hasMoreElements():
+        cell = cells.nextElement()
+        text = cell.getString()
+        if text.endswith(("\n", "\r")):
+            cell.setString(text.rstrip("\r\n"))
+
+
 def convert_auto(source: Path, destination: Path) -> tuple[str, list[str]]:
     import uno  # type: ignore  # LibreOffice 付属（Cloud Run のコンテナ内にだけある）
 
@@ -191,6 +210,7 @@ def convert_auto(source: Path, destination: Path) -> tuple[str, list[str]]:
                     warnings.append(f"{s.Name}: 印刷範囲がなかったため、標準範囲を設定しました。")
                 if not s.getPrintAreas():
                     warnings.append(f"{s.Name}: 印刷範囲が未設定です。使用範囲を出力します。")
+                _strip_trailing_newlines(s)
                 if pattern == "B":
                     # パターンBの古いテンプレートは印刷設定が不安定なため、A4・1ページ（印刷範囲ごと）に揃える
                     style = _own_page_style(doc, s, used_count)
